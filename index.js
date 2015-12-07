@@ -90,6 +90,32 @@ OAuthServer.prototype.grant = function () {
   };
 };
 
+
+/**
+ * Code Auth Grant Middleware
+ *
+ * @param  {Function} check Function will be called with req to check if the
+ *                          user has authorised the request.
+ * @return {Function}       middleware
+ */
+OAuthServer.prototype.authCodeGrant = function(check) {
+    var self = this;
+    var expressAuthCodeGrant = thenify(this.server.authCodeGrant(check));
+
+    return function* authCodeGrant(next) {
+        try {
+            yield expressAuthCodeGrant(this.request, this.response);
+        } catch (err) {
+            if (self.server.passthroughErrors)
+                throw err;
+
+            return handleError(err, self.server, this);
+        }
+
+        yield * next;
+    };
+};
+
 /**
  * OAuth Error handler
  *
